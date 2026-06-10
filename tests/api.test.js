@@ -169,6 +169,34 @@ test('seeded static credentials are restored on existing database', async () => 
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
+test('ADMIN_PASSWORD overrides seeded admin password', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wc26-'));
+  const dbFile = path.join(tmpDir, 'predictions.db');
+  const previousAdminPassword = process.env.ADMIN_PASSWORD;
+  process.env.ADMIN_PASSWORD = 'Kavanaveen';
+
+  try {
+    const { app, db } = await buildApp({ dbFile });
+    const agent = request.agent(app);
+
+    const oldPassword = await agent.post('/api/login').send({ username: 'admin', password: 'password' });
+    assert.equal(oldPassword.status, 401);
+
+    const newPassword = await agent.post('/api/login').send({ username: 'admin', password: 'Kavanaveen' });
+    assert.equal(newPassword.status, 200);
+    assert.equal(newPassword.body.role, 'admin');
+
+    await db.close();
+  } finally {
+    if (previousAdminPassword === undefined) {
+      delete process.env.ADMIN_PASSWORD;
+    } else {
+      process.env.ADMIN_PASSWORD = previousAdminPassword;
+    }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test('Phase 20 Wave 1 migrations are idempotent and upgrade old DB files', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wc26-'));
   const dbFile = path.join(tmpDir, 'predictions.db');

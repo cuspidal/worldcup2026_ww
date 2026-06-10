@@ -38,6 +38,7 @@ Set these in the cloud host:
 NODE_ENV=production
 PORT=<provided by host>
 SESSION_SECRET=<long random string>
+ADMIN_PASSWORD=<admin login password>
 DB_FILE=/path/to/persistent/disk/predictions.db
 TRUST_PROXY=1
 ```

@@ -127,6 +127,7 @@
           <div class="header-actions">
             <p id="welcome-text"></p>
             <!-- <p id="member-total-points" class="total-points">My Points: 0</p> -->
+            <button id="scoring-rules-btn" type="button" class="btn btn-secondary">Scoring Rules</button>
             <button id="logout-btn" type="button" class="btn btn-secondary">Logout</button>
           </div>
         </div>
@@ -391,6 +392,50 @@
             <button id="city-modal-close" class="city-modal-close" type="button" aria-label="Close">✕</button>
           </div>
           <div id="city-modal-body" class="city-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="scoring-rules-modal" class="city-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="scoring-rules-title">
+        <div class="city-modal scoring-rules-modal">
+          <div class="city-modal-header">
+            <div>
+              <p class="kicker">Tournament Guide</p>
+              <h3 id="scoring-rules-title">Scoring Rules</h3>
+            </div>
+            <button id="scoring-rules-close" class="city-modal-close" type="button" aria-label="Close scoring rules">✕</button>
+          </div>
+          <div class="city-modal-body scoring-rules-body">
+            <p>Welcome to the league! Here is exactly how scoring will work for the tournament. Read carefully so you don't lose points!</p>
+
+            <h4>THE BASE SCORING (Every Match)</h4>
+            <ul>
+              <li>Correct Winner (W/D/L): +2 pts</li>
+              <li>Exact Scoreline: +3 pts (Max base score is +5 per match!)</li>
+              <li>Wrong Winner: -1 pt</li>
+              <li>No Prediction: -2 pts (DO NOT forget to make your picks! Ghosting the app will tank your score.)</li>
+            </ul>
+
+            <h4>KNOCKOUT STAGE RULES</h4>
+            <ul>
+              <li>Scores apply to the full match (90 mins + Extra Time).</li>
+              <li>If you predict a DRAW, you MUST also pick the Penalty Winner. You get your +2 points based on correctly guessing the team that advances.</li>
+            </ul>
+
+            <h4>THE GOLDEN BOOT BOOST (Knockouts Only)</h4>
+            <ul>
+              <li>Every player gets 5 Boosts to use during the Knockout Stage.</li>
+              <li>You can use a max of 1 boost per match.</li>
+              <li>How it works: If you use a boost and get the Correct Winner, you get a FLAT +3 BONUS POINTS.</li>
+            </ul>
+
+            <h4>THE UNDERDOG BONUS (New!)</h4>
+            <ul>
+              <li>Fortune favors the brave. If you correctly predict a massive upset (a heavy underdog winning, determined by the admin), you will get an automatic +2 BONUS POINTS.</li>
+              <li>This means a perfect underdog prediction with a Golden Boot can net you up to +10 points in a single match!</li>
+            </ul>
+
+            <p>Good luck, set your alarms, and don't forget to submit your picks!</p>
+          </div>
         </div>
       </div>
 

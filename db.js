@@ -200,11 +200,14 @@ async function initDatabase(dbFile) {
   await run(db, `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_alias_unique ON users(alias) WHERE alias IS NOT NULL`);
   await run(db, `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone_e164) WHERE phone_e164 IS NOT NULL`);
 
+  const adminPassword = process.env.ADMIN_PASSWORD || 'password';
+
   await run(
     db,
      `INSERT INTO users (username, password, role)
-      VALUES ('admin', 'password', 'admin')
-      ON CONFLICT(username) DO UPDATE SET password = 'password', role = 'admin'`
+      VALUES ('admin', ?, 'admin')
+      ON CONFLICT(username) DO UPDATE SET password = excluded.password, role = 'admin'`,
+      [adminPassword]
     );
 
     await run(

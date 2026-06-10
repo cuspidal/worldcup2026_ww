@@ -114,6 +114,11 @@ test('Phase 9 member dashboard includes league summary hooks', () => {
 
 test('Phase 15 member dashboard includes leaderboard and peer read APIs hooks', () => {
   const html = read('index.html');
+  assert.match(html, /id="scoring-rules-btn"/);
+  assert.match(html, /id="scoring-rules-modal"/);
+  assert.match(html, /Scoring Rules/);
+  assert.match(html, /Correct Winner \(W\/D\/L\): \+2 pts/);
+  assert.match(html, /Golden Boot can net you up to \+10 points/);
   assert.match(html, /id="member-leaderboard-body"/);
   assert.match(html, /id="member-peer-select"/);
   assert.match(html, /id="member-peer-status"/);
@@ -126,6 +131,8 @@ test('Phase 15 member dashboard includes leaderboard and peer read APIs hooks', 
 
 test('Phase 15 app includes leaderboard and peer rendering functions', () => {
   const js = read('app.js');
+  assert.match(js, /openScoringRulesModal/);
+  assert.match(js, /closeScoringRulesModal/);
   assert.match(js, /function renderMemberLeaderboardRows\(/);
   assert.match(js, /function renderPeerPredictionRows\(/);
   assert.match(js, /renderMemberLeaderboardAndPeers/);

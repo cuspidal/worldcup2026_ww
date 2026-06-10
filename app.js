@@ -42,6 +42,9 @@ const memberCurrentPasswordInput = document.getElementById('member-current-passw
 const memberNewPasswordInput = document.getElementById('member-new-password');
 const memberConfirmPasswordInput = document.getElementById('member-confirm-password');
 const memberPasswordStatus = document.getElementById('member-password-status');
+const scoringRulesButton = document.getElementById('scoring-rules-btn');
+const scoringRulesModal = document.getElementById('scoring-rules-modal');
+const scoringRulesClose = document.getElementById('scoring-rules-close');
 const logoutButton = document.getElementById('logout-btn');
 const matchesBody = document.getElementById('matches-body');
 const timezoneSelect = document.getElementById('timezone-select');
@@ -325,6 +328,18 @@ function openCityModal(city, venue) {
 
 function closeCityModal() {
   cityModal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function openScoringRulesModal() {
+  if (!scoringRulesModal) return;
+  scoringRulesModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeScoringRulesModal() {
+  if (!scoringRulesModal) return;
+  scoringRulesModal.classList.add('hidden');
   document.body.style.overflow = '';
 }
 
@@ -1771,12 +1786,24 @@ async function start() {
   }
   logoutButton.addEventListener('click', handleLogout);
   adminLogoutButton.addEventListener('click', handleLogout);
+  if (scoringRulesButton) {
+    scoringRulesButton.addEventListener('click', openScoringRulesModal);
+  }
+  if (scoringRulesClose) {
+    scoringRulesClose.addEventListener('click', closeScoringRulesModal);
+  }
+  if (scoringRulesModal) {
+    scoringRulesModal.addEventListener('click', (e) => {
+      if (e.target === scoringRulesModal) closeScoringRulesModal();
+    });
+  }
   cityModalClose.addEventListener('click', closeCityModal);
   cityModal.addEventListener('click', (e) => {
     if (e.target === cityModal) closeCityModal();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeCityModal();
+    if (e.key === 'Escape') closeScoringRulesModal();
   });
   if (adminLeagueCreateForm) {
     adminLeagueCreateForm.addEventListener('submit', handleAdminLeagueCreate);
