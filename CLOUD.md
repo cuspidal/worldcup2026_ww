@@ -13,6 +13,23 @@ Use a host that supports:
 
 Good lightweight options: Render, Railway, Fly.io, or a small VPS. Avoid serverless-only hosts unless you move SQLite to a managed database, because local files are usually ephemeral there.
 
+## Railway Deployment
+
+This repo includes a `Dockerfile`. Railway should use it automatically on the next deploy. The Dockerfile forces `sqlite3` to compile inside the same Debian/Node image that runs the app, which avoids native binary errors such as:
+
+```text
+GLIBC_2.38 not found ... node_sqlite3.node
+```
+
+Railway setup:
+
+1. Deploy from the GitHub repo.
+2. Add a persistent volume mounted at `/data`.
+3. Set the environment variables below.
+4. Redeploy. If Railway still shows the GLIBC error, clear the build cache or trigger a fresh redeploy after the Dockerfile is pushed.
+
+Railway does not need a custom start command when using this Dockerfile. The image runs `npm start`.
+
 ## Required Environment Variables
 
 Set these in the cloud host:
@@ -50,7 +67,7 @@ It returns `{ "ok": true }` when the app is running.
 
 ## Build And Start
 
-Install dependencies and start the app:
+For non-Docker hosts, install dependencies and start the app:
 
 ```bash
 npm install

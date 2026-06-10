@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+coverage
+.planning
+.vscode
