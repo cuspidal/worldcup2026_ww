@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIFA World Cup 2026 Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="landing-view" class="page" aria-labelledby="landing-title">
+        <header id="landing-hero" class="hero">
+          <div class="hero-overlay"></div>
+          <div class="hero-content">
+            <p class="kicker">FIFA WORLD CUP 2026</p>
+            <img
+              class="brand-logo"
+              src="colors-fifa-unveils-official-logo-for-2026-world-cup-custom-cities.png"
+              alt="FIFA World Cup 2026 logo"
+              width="92"
+              height="92"
+            />
+            <h1 id="landing-title">2026 FIFA World Cup Fantasy Challenge</h1>
+            <p class="hero-copy">Welcome to the World's biggest football tournament! Compete against friends, predict the tournament, and prove who knows football best.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#/member/login">Login</a>
+              <a class="btn btn-secondary" href="#/member/signup">Register</a>
+            </div>
+            <div id="landing-countdown" class="countdown" aria-live="polite"></div>
+          </div>
+        </header>
+
+        <section class="section-block" aria-labelledby="fixtures-title">
+          <div class="section-head">
+            <h2 id="fixtures-title">Next 5 Fixtures</h2>
+          </div>
+          <div id="public-fixtures-list" class="public-fixtures-list"></div>
+        </section>
+
+        <section class="section-block" aria-labelledby="host-cities-title">
+          <div class="section-head">
+            <h2 id="host-cities-title">Host Cities And Venues</h2>
+          </div>
+          <div id="host-cities-grid" class="host-city-grid"></div>
+        </section>
+      </section>
+
+      <section id="login-view" class="page hidden" aria-labelledby="login-title">
+        <div class="login-layout">
+          <div class="login-visual" aria-hidden="true">
+            <div class="login-visual-card">
+              <p class="kicker">TOURNAMENT ACCESS</p>
+              <img
+                class="brand-logo login-logo"
+                src="colors-fifa-unveils-official-logo-for-2026-world-cup-custom-cities.png"
+                alt="FIFA World Cup 2026 logo"
+                width="72"
+                height="72"
+              />
+              <h2>World Cup 2026 Operations</h2>
+              <p>Secure member sign-in for fixtures, scoring, and leaderboard.</p>
+            </div>
+          </div>
+
+          <div class="login-panel-wrap">
+            <div class="login-panel">
+              <h1 id="login-title">Member Login</h1>
+              <p class="credential-hint">enter your username and password here</p>
+              <form id="login-form" class="login-form">
+                <div class="floating-field">
+                  <input id="username" name="username" type="text" maxlength="40" required placeholder=" " />
+                  <label for="username">Username</label>
+                </div>
+                <div class="floating-field">
+                  <input id="password" name="password" type="password" maxlength="40" required placeholder=" " />
+                  <label for="password">Password</label>
+                  <button type="button" class="eye-btn" aria-label="Toggle password visibility" onclick="this.previousElementSibling.previousElementSibling.type = this.previousElementSibling.previousElementSibling.type === 'password' ? 'text' : 'password'; this.textContent = this.previousElementSibling.previousElementSibling.type === 'password' ? '👁' : '🙈';">👁</button>
+                </div>
+                <p class="forget-text">to reset password, please reach out to the admin.</p>
+                <button type="submit" class="btn btn-primary block">Enter</button>
+              </form>
+              <p id="login-error" class="login-error" aria-live="polite"></p>
+              <a class="back-link" href="#/">Back to Tournament Home</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="signup-view" class="page hidden" aria-labelledby="signup-title">
+        <div class="signup-panel">
+          <p class="kicker">Registration</p>
+          <h2 id="signup-title">Create Member Account</h2>
+          <p>Create your member account with a username and password.</p>
+          <form id="signup-form" class="login-form">
+            <div class="floating-field">
+              <input id="signup-username" name="signup-username" type="text" maxlength="40" required placeholder=" " />
+              <label for="signup-username">Username</label>
+            </div>
+            <div class="floating-field">
+              <input id="signup-password" name="signup-password" type="password" maxlength="40" required placeholder=" " />
+              <label for="signup-password">Password</label>
+              <button type="button" class="eye-btn" aria-label="Toggle password visibility" onclick="this.previousElementSibling.previousElementSibling.type = this.previousElementSibling.previousElementSibling.type === 'password' ? 'text' : 'password'; this.textContent = this.previousElementSibling.previousElementSibling.type === 'password' ? '👁' : '🙈';">👁</button>           
+            </div>
+            <div class="floating-field">
+              <input id="signup-confirm-password" name="signup-confirm-password" type="password" maxlength="40" required placeholder=" " />
+              <label for="signup-confirm-password">Confirm Password</label>
+              <button type="button" class="eye-btn" aria-label="Toggle password visibility" onclick="this.previousElementSibling.previousElementSibling.type = this.previousElementSibling.previousElementSibling.type === 'password' ? 'text' : 'password'; this.textContent = this.previousElementSibling.previousElementSibling.type === 'password' ? '👁' : '🙈';">👁</button>
+
+            </div>
+            <button type="submit" class="btn btn-primary block">Create Account</button>
+            <p id="signup-status" class="login-error" aria-live="polite"></p>
+          </form>
+          <a class="btn btn-primary" href="#/member/login">Go To Login</a>
+          <a class="back-link" href="#/">Back to Tournament Home</a>
+        </div>
+      </section>
+
+      <section id="predictions-view" class="page hidden" aria-labelledby="member-title">
+        <div class="member-header">
+          <div>
+            <!-- <p class="kicker"> </p> -->
+            <h1 id="member-title">Member Dashboard</h1>
+          </div>
+          <div class="header-actions">
+            <p id="welcome-text"></p>
+            <!-- <p id="member-total-points" class="total-points">My Points: 0</p> -->
+            <button id="logout-btn" type="button" class="btn btn-secondary">Logout</button>
+          </div>
+        </div>
+
+        <!-- <nav class="member-screen-nav" aria-label="Member dashboard navigation">
+          <p id="member-total-points" class="total-points">My Points: 0</p>
+          <button id="member-tab-predictions" class="member-screen-tab active" type="button" aria-selected="true">My Predictions</button>
+          <button id="member-tab-league" class="member-screen-tab" type="button" aria-selected="false">My League</button>
+        </nav> -->
+
+        <nav class="member-screen-nav" aria-label="Member dashboard navigation">
+          <div class="member-screen-nav-left">
+            <p id="member-total-points" class="total-points">My Points: 0</p>
+            <!-- <p id="member-boosts-remaining" class="boosts-remaining" aria-live="polite">Golden Boot Boosts: 5 remaining</p> -->
+            <!-- <p id="member-official-status" class="official-score-status" aria-live="polite">Official scores pending admin calculation</p> -->
+            <button id="member-tab-predictions" class="member-screen-tab active" type="button" aria-selected="true">My Predictions</button>
+            <button id="member-tab-league" class="member-screen-tab" type="button" aria-selected="false">My League</button>
+            <button id="member-tab-insights" class="member-screen-tab" type="button" aria-selected="false">My Insights</button>
+          </div>
+          <div class="tz-bar">
+            <label for="timezone-select">Display times in:
+              <select id="timezone-select">
+                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                <option value="America/Chicago">Central Time (CT)</option>
+                <option value="Europe/London">London (GMT/BST)</option>
+                <option value="Europe/Berlin">Germany (CET/CEST)</option>
+                <option value="Europe/Rome">Italy (CET/CEST)</option>
+                <option value="Asia/Kolkata">India (IST)</option>
+                <option value="Asia/Singapore">Singapore (SGT)</option>
+                <option value="Australia/Sydney">Australia (AEST/AEDT)</option>
+                <option value="Asia/Tokyo">Japan (JST)</option>
+              </select>
+            </label>
+          </div>
+        </nav>
+
+        <section id="member-predictions-screen" class="member-screen" aria-label="My Predictions">
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-expand"></th>
+                  <th>#</th>
+                  <th>Date / Time</th>
+                  <th>Group</th>
+                  <th>Match</th>
+                  <th>My Prediction</th>
+                  <th>Actual</th>
+                  <th>Points</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="matches-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="member-league-screen" class="member-screen hidden" aria-label="My League">
+          <section class="member-league-panel" aria-label="League membership summary">
+            <div class="member-league-card member-leaderboard-card">
+              <h3 id="member-leaderboard-title">League Leaderboard</h3>
+              <div class="member-mini-table-wrap">
+                <table class="member-mini-table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Member</th>
+                      <th>Total Points</th>
+                      <th>Exact Scorelines </th>
+                      <th>Correct Winners</th>
+                      <th>Missed Predictions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="member-leaderboard-body"></tbody>
+                </table>
+              </div>
+            </div>
+            
+            
+            <div class="member-league-card member-peer-card">
+              <h3>View Others' Predictions</h3>
+              <div class="member-peer-controls">
+                <label for="member-peer-select">Select member</label>
+                <select id="member-peer-select"></select>
+                <button id="member-peer-toggle" class="btn btn-secondary" type="button">Show all</button>
+              </div>
+              <p id="member-peer-status" class="confirm-status" aria-live="polite"></p>
+              <div class="member-mini-table-wrap">
+                <table class="member-mini-table">
+                  <thead>
+                    <tr>
+                      <th>Match</th>
+                      <th>Teams</th>
+                      <th>Prediction</th>
+                    </tr>
+                  </thead>
+                  <tbody id="member-peer-predictions-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+          <section class="member-league-panel" aria-label="Password management">
+            <div class="member-league-card member-password-card collapsed">
+              <h3 class="collapsible-heading" onclick="this.closest('.member-password-card').classList.toggle('collapsed')" style="cursor:pointer;">Change Password <span class="collapse-indicator">+</span></h3>
+              <form id="member-password-form" class="login-form">
+                <div class="floating-field">
+                  <input id="member-current-password" type="password" maxlength="64" required placeholder=" " />
+                  <label for="member-current-password">Current Password</label>
+                </div>
+                <div class="floating-field">
+                  <input id="member-new-password" type="password" maxlength="64" required placeholder=" " />
+                  <label for="member-new-password">New Password</label>
+                </div>
+                <div class="floating-field">
+                  <input id="member-confirm-password" type="password" maxlength="64" required placeholder=" " />
+                  <label for="member-confirm-password">Confirm New Password</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Password</button>
+                <p id="member-password-status" class="confirm-status" aria-live="polite"></p>
+              </form>
+            </div>
+          </section>
+          <p> </p>
+        </section>
+
+        <section id="member-insights-screen" class="member-screen hidden" aria-label="My Insights">
+          <section class="member-insights-panel" aria-label="Member insights">
+            <div class="member-league-card member-insights-chart-card">
+              <div class="member-insights-card-head">
+                <h3 id="member-insights-title">Points Table</h3>
+                <p id="member-insights-status" class="confirm-status" aria-live="polite"></p>
+              </div>
+              <div id="member-points-chart" class="member-points-chart" role="img" aria-label="League points over matches"></div>
+            </div>
+            <div class="member-league-card member-coming-soon-card">
+              <h3>Coming Soon</h3>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section id="admin-view" class="page hidden" aria-labelledby="admin-title">
+        <div class="admin-layout">
+          <aside class="admin-sidebar">
+            <h2 class="admin-logo">FIFA Ops</h2>
+            <nav aria-label="Admin navigation">
+              <a id="admin-nav-matches" class="admin-nav-link active" href="#/admin/dashboard" data-admin-screen="matches">Manage Matches</a>
+              <a id="admin-nav-leagues-users" class="admin-nav-link" href="#/admin/dashboard" data-admin-screen="leagues-users">Manage Leagues and Users</a>
+            </nav>
+          </aside>
+
+          <div class="admin-main">
+            <header class="admin-header">
+              <div>
+                <p class="kicker">Admin Dashboard</p>
+                <h2 id="admin-title">Tournament Operations</h2>
+
+                <p id="admin-welcome-text"></p>
+              </div>
+              <div class="admin-head-right">
+                <p id="admin-datetime" class="admin-datetime"></p>
+                <button id="admin-logout-btn" type="button" class="btn btn-secondary">Logout</button>
+              </div>
+            </header>
+
+            <section class="kpi-row" aria-label="Key metrics">
+              <article class="kpi-card">
+                <span class="kpi-label">Total Members Registered</span>
+                <strong id="kpi-members">0</strong>
+              </article>
+              <article class="kpi-card">
+                <span class="kpi-label">Matches Programmed</span>
+                <strong id="kpi-matches">0</strong>
+              </article>
+              <article class="kpi-card">
+                <span class="kpi-label">System Status</span>
+                <strong id="kpi-status">Active</strong>
+              </article>
+            </section>
+
+            <section id="admin-leagues-users-screen" class="admin-screen hidden" aria-label="League and user management">
+              <section class="admin-league-panel" aria-label="League management">
+              <div class="admin-league-card">
+                <h3>Leagues Management</h3>
+                <form id="admin-league-create-form" class="inline-form">
+                  <input id="admin-league-name" type="text" maxlength="64" placeholder="New league name" required />
+                  <button type="submit" class="btn btn-primary">Create League</button>
+                </form>
+                <p id="admin-league-status" class="confirm-status" aria-live="polite"></p>
+                <div class="admin-mini-table-wrap">
+                  <table class="admin-mini-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Members</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-leagues-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="admin-league-card">
+                <h3>Users Management</h3>
+                <form id="admin-member-assign-form" class="inline-form">
+                  <select id="admin-member-select" required></select>
+                  <select id="admin-league-select" required></select>
+                  <button type="submit" class="btn btn-primary">Assign</button>
+                </form>
+                <div class="admin-mini-table-wrap">
+                  <table class="admin-mini-table admin-users-table">
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>Alias</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>League</th>
+                        <th>Password Reset</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-users-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+            </section>
+
+            <section id="admin-matches-screen" class="admin-screen" aria-label="Manage matches">
+            <div class="table-wrap admin-grid-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Group</th>
+                    <th>Match</th>
+                    <th>Status</th>
+                    <th>Actual Score</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-matches-body"></tbody>
+              </table>
+            </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <div id="city-modal" class="city-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="city-modal-title">
+        <div class="city-modal">
+          <div class="city-modal-header">
+            <div>
+              <p class="kicker">City Schedule</p>
+              <h3 id="city-modal-title"></h3>
+              <p id="city-modal-venue" class="host-city-meta"></p>
+            </div>
+            <button id="city-modal-close" class="city-modal-close" type="button" aria-label="Close">✕</button>
+          </div>
+          <div id="city-modal-body" class="city-modal-body"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <template id="member-row-template">
+      <tr class="match-main-row">
+        <td class="col-expand"><button class="expand-btn" type="button" aria-label="Expand match details">+</button></td>
+        <td class="match-number"></td>
+        <td class="match-date"></td>
+        <td class="match-group"></td>
+        <td class="match-teams"></td>
+        <td>
+          <div class="score-inputs">
+            <div class="score-stepper">
+              <button class="stepper-btn stepper-dec" type="button">-</button>
+              <input class="score-a" type="number" min="0" max="50" placeholder="-" />
+              <button class="stepper-btn stepper-inc" type="button">+</button>
+            </div>
+            <span class="score-sep">:</span>
+            <div class="score-stepper">
+              <button class="stepper-btn stepper-dec" type="button">-</button>
+              <input class="score-b" type="number" min="0" max="50" placeholder="-" />
+              <button class="stepper-btn stepper-inc" type="button">+</button>
+            </div>
+          </div>
+          <div class="knockout-prediction-controls hidden" data-knockout-controls>
+            <div class="penalty-winner-control" aria-label="Penalty winner side">
+              <span class="penalty-label">Winner</span>
+              <div class="penalty-toggle" data-penalty-toggle>
+                <button class="penalty-btn penalty-btn-a" type="button" data-side="A">A</button>
+                <div class="penalty-pill-track">
+                  <div class="penalty-pill"></div>
+                </div>
+                <button class="penalty-btn penalty-btn-b" type="button" data-side="B">B</button>
+              </div>
+              <select class="penalty-winner-side" aria-label="Penalty winner side" style="display:none">
+                <option value="">none</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+              </select>
+            </div>
+            <div class="golden-boot-control">
+              <span class="boot-label"> 👟 Golden Boot</span>
+              <label class="ios-toggle-wrap" aria-label="Use Golden Boot Boost">
+                <input class="golden-boot-boost" type="checkbox" />
+                <span class="ios-toggle-track">
+                  <span class="ios-toggle-thumb"></span>
+                </span>
+              </label>
+              <span class="boost-count">5 left</span>
+            </div>
+          </div>
+        </td>
+        <td class="actual-score"></td>
+        <td class="member-points-cell">
+          <span class="member-points"></span>
+          <span class="member-status points-tooltip"></span>
+        </td>
+        <td class="action-cell-td">
+          <div class="action-cell">
+            <button class="confirm-btn icon-btn" type="button" aria-label="Confirm prediction" title="Confirm">✓</button>
+            <button class="clear-btn icon-btn" type="button" aria-label="Clear prediction" title="Clear">✕</button>
+            <span class="confirm-status"></span>
+          </div>
+        </td>
+      </tr>
+      <tr class="match-detail-row hidden">
+        <td colspan="9" class="match-detail-cell"></td>
+      </tr>
+    </template>
+
+    <template id="admin-row-template">
+      <tr>
+        <td class="match-number"></td>
+        <td class="match-date"></td>
+        <td class="match-group"></td>
+        <td class="match-teams"></td>
+        <td class="admin-status-cell"></td>
+        <td>
+          <div class="score-inputs">
+            <input class="score-a" type="number" min="0" max="50" placeholder="-" />
+            <span>:</span>
+            <input class="score-b" type="number" min="0" max="50" placeholder="-" />
+          </div>
+          <div class="admin-result-modifiers hidden" data-admin-modifiers>
+            <label class="admin-penalty-winner-control">Penalty winner
+              <select class="admin-penalty-winner-side" aria-label="Admin penalty winner side">
+                <option value="">Required if tied</option>
+                <option value="A">Team A advances</option>
+                <option value="B">Team B advances</option>
+              </select>
+            </label>
+            <label class="admin-underdog-control">Underdog bonus side
+              <select class="admin-underdog-winner-side" aria-label="Admin underdog winner side">
+                <option value="">No underdog bonus</option>
+                <option value="A">Team A underdog</option>
+                <option value="B">Team B underdog</option>
+              </select>
+            </label>
+          </div>
+        </td>
+        <td>
+          <button class="confirm-btn icon-btn" type="button" aria-label="Confirm prediction" title="Confirm">✓</button>
+          <button class="clear-btn icon-btn" type="button" aria-label="Clear prediction" title="Clear">✕</button>
+          <span class="confirm-status"></span>
+        </td>
+      </tr>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
