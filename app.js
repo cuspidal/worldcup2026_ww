@@ -510,26 +510,30 @@ async function api(path, options = {}) {
 }
 
 function buildDetailPanel(match) {
-  const formSlots = (teamA, teamB) => `
+  const renderSlots = (results) => {
+    const safeResults = Array.isArray(results) ? results.slice(0, 3) : ['-', '-', '-'];
+    while (safeResults.length < 3) safeResults.push('-');
+    return safeResults
+      .map((result) => `<span class="form-slot ${resultToSlotClass(result)}">${result}</span>`)
+      .join('');
+  };
+
+  const formSlots = (teamA, teamB, teamAResults, teamBResults) => `
     <div class="compact-form-stack">
       <div class="compact-form-line">
         <span class="compact-form-team">${flagImg(teamA)} ${teamA}</span>
         <div class="form-slots compact-form-slots">
-          <span class="form-slot">-</span>
-          <span class="form-slot">-</span>
-          <span class="form-slot">-</span>
+          ${renderSlots(teamAResults)}
         </div>
       </div>
       <div class="compact-form-line">
         <span class="compact-form-team">${flagImg(teamB)} ${teamB}</span>
         <div class="form-slots compact-form-slots">
-          <span class="form-slot">-</span>
-          <span class="form-slot">-</span>
-          <span class="form-slot">-</span>
+          ${renderSlots(teamBResults)}
         </div>
       </div>
     </div>
-    <p class="form-caption compact-form-caption">Form data not yet available</p>
+    <p class="form-caption compact-form-caption">Based on earlier World Cup matches</p>
   `;
 
   return `
@@ -541,7 +545,7 @@ function buildDetailPanel(match) {
       </div>
       <div class="detail-section detail-section-form">
         <h4>Last 3 Results</h4>
-        ${formSlots(match.team_a, match.team_b)}
+        ${formSlots(match.team_a, match.team_b, match.lastThree?.teamAResults, match.lastThree?.teamBResults)}
       </div>
       <div class="detail-section detail-section-league-picks" data-match-peer-preview data-match-number="${match.match_number}">
         <h4>League Predictions</h4>
@@ -552,6 +556,81 @@ function buildDetailPanel(match) {
       </div>
     </div>
   `;
+}
+
+function resultToSlotClass(result) {
+  if (result === 'W') return 'form-slot-win';
+  if (result === 'L') return 'form-slot-loss';
+  if (result === 'D') return 'form-slot-draw';
+  return 'form-slot-empty';
+}
+
+function resolveTeamResult(match, actual, teamName) {
+  if (!match || !actual || !teamName) return null;
+  const teamAScore = Number(actual.teamAScore);
+  const teamBScore = Number(actual.teamBScore);
+  if (!Number.isInteger(teamAScore) || !Number.isInteger(teamBScore)) return null;
+
+  const isTeamA = match.team_a === teamName;
+  const isTeamB = match.team_b === teamName;
+  if (!isTeamA && !isTeamB) return null;
+
+  const scoreDiff = teamAScore - teamBScore;
+  if (scoreDiff !== 0) {
+    if (isTeamA) return scoreDiff > 0 ? 'W' : 'L';
+    return scoreDiff < 0 ? 'W' : 'L';
+  }
+
+  if (match.stage !== 'Group Stage' && actual.penaltyWinnerSide) {
+    if (isTeamA) return actual.penaltyWinnerSide === 'A' ? 'W' : 'L';
+    return actual.penaltyWinnerSide === 'B' ? 'W' : 'L';
+  }
+
+  return 'D';
+}
+
+function kickoffTimeMs(match) {
+  return parseEtToUtc(match.date, match.time_et)?.getTime() || 0;
+}
+
+function buildLastThreeFormByMatch(matches, scoreMap) {
+  const sortedMatches = [...matches].sort((left, right) => {
+    const timeDiff = kickoffTimeMs(left) - kickoffTimeMs(right);
+    if (timeDiff !== 0) return timeDiff;
+    return left.match_number - right.match_number;
+  });
+
+  const formMap = new Map();
+
+  for (const match of sortedMatches) {
+    const currentKickoff = kickoffTimeMs(match);
+
+    const computeTeamHistory = (teamName) => {
+      const outcomes = [];
+      for (const priorMatch of sortedMatches) {
+        if (priorMatch.match_number === match.match_number) continue;
+        if (kickoffTimeMs(priorMatch) >= currentKickoff) continue;
+        if (priorMatch.team_a !== teamName && priorMatch.team_b !== teamName) continue;
+
+        const actual = scoreMap.get(priorMatch.match_number)?.actual || null;
+        if (!actual) continue;
+
+        const result = resolveTeamResult(priorMatch, actual, teamName);
+        if (result) outcomes.push(result);
+      }
+
+      const lastThree = outcomes.slice(-3).reverse();
+      while (lastThree.length < 3) lastThree.push('-');
+      return lastThree;
+    };
+
+    formMap.set(match.match_number, {
+      teamAResults: computeTeamHistory(match.team_a),
+      teamBResults: computeTeamHistory(match.team_b)
+    });
+  }
+
+  return formMap;
 }
 
 function renderMatchPeerPreview(container, predictions, match) {
@@ -731,11 +810,17 @@ async function renderPredictionsTable() {
   const scoreMap = new Map(scoresResult.items.map((item) => [item.matchNumber, item]));
   const cachedScoreMap = new Map(cachedItems.map((item) => [item.matchNumber, item]));
   const statusMap = new Map(statusResult.status.map((item) => [item.matchNumber, item]));
+  const lastThreeFormByMatch = buildLastThreeFormByMatch(matchesResult.matches || [], scoreMap);
 
   matchesBody.innerHTML = '';
   let currentStage = '';
 
   for (const match of matchesResult.matches) {
+    const matchWithForm = {
+      ...match,
+      lastThree: lastThreeFormByMatch.get(match.match_number) || { teamAResults: ['-', '-', '-'], teamBResults: ['-', '-', '-'] }
+    };
+
     if (match.stage !== currentStage) {
       currentStage = match.stage;
       const stageRow = document.createElement('tr');
@@ -773,16 +858,16 @@ async function renderPredictionsTable() {
       });
     }
 
-    mainRow.querySelector('.match-number').textContent = match.match_number;
-    mainRow.querySelector('.match-date').textContent = formatMatchTime(match, currentTimezone);
-    mainRow.querySelector('.match-group').textContent = match.group || match.stage;
-    mainRow.querySelector('.match-teams').innerHTML = formatTeamsWithFlags(match.team_a, match.team_b);
+    mainRow.querySelector('.match-number').textContent = matchWithForm.match_number;
+    mainRow.querySelector('.match-date').textContent = formatMatchTime(matchWithForm, currentTimezone);
+    mainRow.querySelector('.match-group').textContent = matchWithForm.group || matchWithForm.stage;
+    mainRow.querySelector('.match-teams').innerHTML = formatTeamsWithFlags(matchWithForm.team_a, matchWithForm.team_b);
 
-    const scoreItem = scoreMap.get(match.match_number);
-    const officialItem = cachedScoreMap.get(match.match_number);
+    const scoreItem = scoreMap.get(matchWithForm.match_number);
+    const officialItem = cachedScoreMap.get(matchWithForm.match_number);
     const existingPrediction = scoreItem?.prediction || null;
     const actualResult = scoreItem?.actual || null;
-    const statusInfo = statusMap.get(match.match_number);
+    const statusInfo = statusMap.get(matchWithForm.match_number);
     const isLocked = statusInfo?.isLocked || statusInfo?.hasStarted;
 
     if (existingPrediction) {
@@ -847,7 +932,7 @@ async function renderPredictionsTable() {
       confirmButton.addEventListener('click', async () => {
         const teamAScore = toIntOrNull(scoreAInput.value);
         const teamBScore = toIntOrNull(scoreBInput.value);
-        const isKnockout = match.stage !== 'Group Stage';
+          const isKnockout = matchWithForm.stage !== 'Group Stage';
         const predictedDraw = teamAScore !== null && teamBScore !== null && teamAScore === teamBScore;
         const penaltyWinnerSide = isKnockout && predictedDraw ? penaltySelect?.value || null : null;
         const goldenBootBoost = isKnockout ? Boolean(boostInput?.checked) : false;
@@ -868,14 +953,14 @@ async function renderPredictionsTable() {
         try {
           const payload = { teamAScore, teamBScore, penaltyWinnerSide, goldenBootBoost };
           if (existingPrediction) {
-            await api(`/api/predictions/${match.match_number}`, {
+            await api(`/api/predictions/${matchWithForm.match_number}`, {
               method: 'PUT',
               body: JSON.stringify(payload)
             });
           } else {
             await api('/api/predictions', {
               method: 'POST',
-              body: JSON.stringify({ matchNumber: match.match_number, ...payload })
+              body: JSON.stringify({ matchNumber: matchWithForm.match_number, ...payload })
             });
           }
 
@@ -907,7 +992,7 @@ async function renderPredictionsTable() {
         }
 
         try {
-          await api(`/api/predictions/${match.match_number}`, { method: 'DELETE' });
+          await api(`/api/predictions/${matchWithForm.match_number}`, { method: 'DELETE' });
           statusEl.textContent = 'deleted';
           statusEl.classList.remove('status-error');
           statusEl.classList.add('status-ok');
@@ -927,10 +1012,10 @@ async function renderPredictionsTable() {
     expandBtn.addEventListener('click', () => {
       const expanded = expandBtn.classList.contains('expanded');
       if (!detailRendered) {
-        detailRow.querySelector('.match-detail-cell').innerHTML = buildDetailPanel(match);
+        detailRow.querySelector('.match-detail-cell').innerHTML = buildDetailPanel(matchWithForm);
         const peerPreviewContainer = detailRow.querySelector('[data-match-peer-preview]');
         if (peerPreviewContainer) {
-          loadAndRenderMatchPeerPreview(peerPreviewContainer, match).catch(() => {
+          loadAndRenderMatchPeerPreview(peerPreviewContainer, matchWithForm).catch(() => {
             // Row-level errors are rendered in the preview container.
           });
         }

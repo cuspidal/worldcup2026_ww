@@ -15,6 +15,24 @@ test('member expand panel uses compact stacked team form UI', () => {
   assert.match(appJs, /<h4>Last 3 Results<\/h4>/);
 });
 
+test('last three results are computed from actual match data before kickoff', () => {
+  assert.match(appJs, /function buildLastThreeFormByMatch\(matches, scoreMap\)/);
+  assert.match(appJs, /function resolveTeamResult\(match, actual, teamName\)/);
+  assert.match(appJs, /if \(kickoffTimeMs\(priorMatch\) >= currentKickoff\) continue;/);
+  assert.match(appJs, /const lastThree = outcomes\.slice\(-3\)\.reverse\(\)/);
+  assert.match(appJs, /while \(lastThree\.length < 3\) lastThree\.push\('-'\);/);
+  assert.match(appJs, /lastThreeFormByMatch = buildLastThreeFormByMatch\(matchesResult\.matches \|\| \[\], scoreMap\)/);
+});
+
+test('last three result slots render W\/D\/L with state classes', () => {
+  assert.match(appJs, /function resultToSlotClass\(result\)/);
+  assert.match(appJs, /form-slot-win/);
+  assert.match(appJs, /form-slot-loss/);
+  assert.match(appJs, /form-slot-draw/);
+  assert.match(appJs, /form-slot-empty/);
+  assert.match(appJs, /<span class="form-slot \$\{resultToSlotClass\(result\)\}">\$\{result\}<\/span>/);
+});
+
 test('member expand panel includes league predictions preview and view-more hooks', () => {
   assert.match(appJs, /data-match-peer-preview/);
   assert.match(appJs, /data-match-peer-list/);
