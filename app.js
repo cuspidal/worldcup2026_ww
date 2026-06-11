@@ -15,6 +15,7 @@ const signupConfirmPasswordInput = document.getElementById('signup-confirm-passw
 const signupStatus = document.getElementById('signup-status');
 
 const landingCountdown = document.getElementById('landing-countdown');
+const landingTimezoneSelect = document.getElementById('landing-timezone-select');
 const hostCitiesGrid = document.getElementById('host-cities-grid');
 const publicFixturesList = document.getElementById('public-fixtures-list');
 
@@ -113,6 +114,8 @@ const ALLOWED_TIMEZONES = [
   'Australia/Sydney',
   'Asia/Tokyo'
 ];
+
+const PUBLIC_TIMEZONE_COOKIE = 'wc26_timezone';
 
 const REASON_LABELS = {
   exact: 'Exact scoreline',
@@ -239,6 +242,31 @@ function formatMatchTime(match, timezone) {
     minute: '2-digit',
     timeZoneName: 'short'
   }).format(matchDate);
+}
+
+function getCookieValue(name) {
+  const prefix = `${name}=`;
+  return document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix))
+    ?.slice(prefix.length) || null;
+}
+
+function savePublicTimezone(timezone) {
+  if (!ALLOWED_TIMEZONES.includes(timezone)) return;
+  const maxAge = 60 * 60 * 24 * 365;
+  document.cookie = `${PUBLIC_TIMEZONE_COOKIE}=${encodeURIComponent(timezone)}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+}
+
+function loadPublicTimezone() {
+  const timezone = decodeURIComponent(getCookieValue(PUBLIC_TIMEZONE_COOKIE) || '');
+  return ALLOWED_TIMEZONES.includes(timezone) ? timezone : 'America/New_York';
+}
+
+function syncTimezoneControls() {
+  if (landingTimezoneSelect) landingTimezoneSelect.value = currentTimezone;
+  if (timezoneSelect) timezoneSelect.value = currentTimezone;
 }
 
 function isMatchStarted(match) {
@@ -404,7 +432,7 @@ function renderPublicFixtures() {
 
     row.innerHTML = `
       <div>
-        <div class="fixture-time">${formatMatchTime(match, 'America/New_York')}</div>
+        <div class="fixture-time">${formatMatchTime(match, currentTimezone)}</div>
       </div>
       <div>
         <span class="fixture-badge fixture-stage-badge">Group Stage - ${match.group}</span>
@@ -1779,6 +1807,10 @@ async function restoreSession() {
 }
 
 async function start() {
+  // Restore timezone from cookie for unauthenticated landing page use
+  currentTimezone = loadPublicTimezone();
+  syncTimezoneControls();
+
   loginForm.addEventListener('submit', handleLogin);
   signupForm.addEventListener('submit', handleSignup);
   if (memberPasswordForm) {
@@ -1879,6 +1911,18 @@ async function start() {
       await renderPredictionsTable();
     }
   });
+
+  if (landingTimezoneSelect) {
+    landingTimezoneSelect.addEventListener('change', () => {
+      const tz = landingTimezoneSelect.value;
+      if (!ALLOWED_TIMEZONES.includes(tz)) return;
+      currentTimezone = tz;
+      savePublicTimezone(tz);
+      syncTimezoneControls();
+      renderPublicFixtures();
+      renderHostCities();
+    });
+  }
 
   await hydrateSchedule();
   await restoreSession();

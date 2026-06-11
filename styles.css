@@ -65,7 +65,7 @@ h3 {
   background: var(--color-surface-0);
   border: var(--border);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow: clip; /* clip without creating a scroll container — lets child overflow-x:auto work on iOS */
 }
 
 .hidden {
@@ -204,6 +204,23 @@ h3 {
 .public-fixtures-list {
   display: grid;
   gap: var(--space-3);
+}
+
+.landing-timezone-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.landing-timezone-control select {
+  padding: 8px;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font: inherit;
 }
 
 .fixture-row {
@@ -460,6 +477,7 @@ h3 {
   border-radius: var(--radius-md);
   background: var(--color-surface-1);
   padding: var(--space-4);
+  min-width: 0; /* allow card to shrink inside grid/flex */
 }
 
 .member-league-card h3 {
@@ -772,6 +790,7 @@ h3 {
 
 .member-mini-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .member-peer-controls {
@@ -868,6 +887,7 @@ h3 {
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   padding: var(--space-5) var(--space-6) var(--space-6) var(--space-6);
 }
 
@@ -1156,6 +1176,7 @@ th {
 
 .admin-main {
   background: var(--color-surface-0);
+  min-width: 0; /* allow main area to shrink inside grid so overflow-x:auto works */
 }
 
 .admin-header {
@@ -1192,6 +1213,7 @@ th {
   border-radius: var(--radius-md);
   background: var(--color-surface-1);
   padding: var(--space-4);
+  min-width: 0;
 }
 
 .kpi-label {
@@ -1222,6 +1244,7 @@ th {
   border-radius: var(--radius-md);
   background: var(--color-surface-1);
   padding: var(--space-4);
+  min-width: 0;
 }
 
 .admin-league-card h3 {
@@ -1252,6 +1275,7 @@ th {
 
 .admin-mini-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: var(--space-3);
 }
 
@@ -1365,12 +1389,29 @@ input:disabled {
   }
 
   .admin-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .admin-sidebar {
     border-right: 0;
     border-bottom: var(--border);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .admin-sidebar nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .admin-nav-link {
+    display: inline-flex;
+    margin-bottom: 0;
+  }
+
+  .admin-logo {
+    font-size: 18px;
+    margin-bottom: var(--space-2);
   }
 }
 
@@ -1401,7 +1442,7 @@ input:disabled {
   .admin-league-panel,
   .member-league-panel,
   .member-insights-panel {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .section-block,
@@ -1411,6 +1452,8 @@ input:disabled {
   .kpi-row,
   .table-wrap,
   /* .tz-bar, */
+  .admin-league-panel,
+  .member-screen-nav,
   .member-league-panel,
   .member-insights-panel,
   .hero-content {
