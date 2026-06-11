@@ -1041,8 +1041,16 @@ th {
 
 .match-detail-panel {
   display: grid;
-  gap: var(--space-4);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  grid-template-columns: minmax(180px, 0.85fr) minmax(220px, 0.9fr) minmax(280px, 1.25fr);
+}
+
+.detail-section {
+  padding-right: var(--space-3);
+}
+
+.detail-section:not(:last-child) {
+  border-right: 1px solid #dbe2ea;
 }
 
 .detail-section h4 {
@@ -1066,6 +1074,97 @@ th {
   place-items: center;
   font-size: 11px;
   color: #475569;
+}
+
+.detail-section-form {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.compact-form-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.compact-form-line {
+  display: grid;
+  grid-template-columns: max-content auto;
+  align-items: center;
+  gap: 6px;
+  justify-content: start;
+}
+
+.compact-form-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-form-slots {
+  gap: 4px;
+}
+
+.compact-form-caption {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.detail-section-league-picks {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.match-peer-list {
+  display: grid;
+  gap: 6px;
+}
+
+.match-peer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.match-peer-user {
+  font-weight: 700;
+  color: #1f2937;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-peer-pick {
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.match-peer-empty {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.match-peer-more-btn {
+  justify-self: start;
+  padding: 6px 10px;
+  font-size: 11px;
 }
 
 .confirm-status {
@@ -1413,6 +1512,16 @@ input:disabled {
     font-size: 18px;
     margin-bottom: var(--space-2);
   }
+
+  .match-detail-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-section:not(:last-child) {
+    border-right: 0;
+    border-bottom: 1px solid #dbe2ea;
+    padding-bottom: var(--space-3);
+  }
 }
 
 @media (max-width: 780px) {
@@ -1443,6 +1552,14 @@ input:disabled {
   .member-league-panel,
   .member-insights-panel {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detail-section {
+    padding-right: 0;
+  }
+
+  .detail-section:not(:last-child) {
+    border-bottom: 1px solid #dbe2ea;
   }
 
   .section-block,

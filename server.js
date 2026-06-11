@@ -1270,6 +1270,64 @@ async function buildApp(options = {}) {
     });
   });
 
+  app.get('/api/member/matches/:matchNumber/peer-predictions', requireAuth, requireMemberLeagueContext, async (req, res) => {
+    const matchNumber = Number(req.params.matchNumber);
+    if (!Number.isInteger(matchNumber) || matchNumber <= 0) {
+      res.status(400).json({ error: 'Invalid match number' });
+      return;
+    }
+
+    const match = matchMap.get(matchNumber);
+    if (!match) {
+      res.status(404).json({ error: 'Match not found' });
+      return;
+    }
+
+    const rows = await db.all(
+      `SELECT u.id AS user_id,
+              u.username,
+              p.team_a_score,
+              p.team_b_score,
+              p.penalty_winner_side,
+              p.golden_boot_boost,
+              p.updated_at
+       FROM users u
+       JOIN member_leagues ml ON ml.user_id = u.id
+       LEFT JOIN predictions p ON p.user_id = u.id AND p.match_number = ?
+       WHERE u.role = 'member'
+         AND ml.league_id = ?
+         AND u.id != ?
+       ORDER BY u.username ASC`,
+      [matchNumber, req.memberLeague.leagueId, req.session.userId]
+    );
+
+    const predictions = rows.map((row) => ({
+      userId: row.user_id,
+      username: row.username,
+      hasPrediction: Number.isInteger(row.team_a_score) && Number.isInteger(row.team_b_score),
+      teamAScore: row.team_a_score,
+      teamBScore: row.team_b_score,
+      penaltyWinnerSide: row.penalty_winner_side || null,
+      goldenBootBoost: Boolean(row.golden_boot_boost),
+      updatedAt: row.updated_at || null
+    }));
+
+    res.json({
+      league: {
+        id: req.memberLeague.leagueId,
+        name: req.memberLeague.leagueName
+      },
+      match: {
+        matchNumber,
+        stage: match.stage,
+        group: match.group,
+        teamA: match.team_a,
+        teamB: match.team_b
+      },
+      predictions
+    });
+  });
+
   app.get('/api/member/peers/:userId/predictions', requireAuth, requireMemberLeagueContext, async (req, res) => {
     const userId = Number(req.params.userId);
     if (!Number.isInteger(userId) || userId <= 0) {

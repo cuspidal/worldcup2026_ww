@@ -79,6 +79,10 @@ const cityModalTitle = document.getElementById('city-modal-title');
 const cityModalVenue = document.getElementById('city-modal-venue');
 const cityModalBody = document.getElementById('city-modal-body');
 const cityModalClose = document.getElementById('city-modal-close');
+const matchPeersModal = document.getElementById('match-peers-modal');
+const matchPeersModalTitle = document.getElementById('match-peers-modal-title');
+const matchPeersModalBody = document.getElementById('match-peers-modal-body');
+const matchPeersModalClose = document.getElementById('match-peers-modal-close');
 
 let sessionUser = null;
 let currentTimezone = 'America/New_York';
@@ -90,6 +94,7 @@ let memberActiveScreen = 'predictions';
 let adminLeagueData = { leagues: [], members: [], users: [] };
 let memberPeersData = [];
 let memberPeerShowAll = false;
+let matchPeerPredictionsCache = new Map();
 
 const PEER_PREDICTION_LATEST_LIMIT = 10;
 const CHART_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#0ea5e9'];
@@ -359,6 +364,41 @@ function closeCityModal() {
   document.body.style.overflow = '';
 }
 
+function openMatchPeersModal(match, predictions) {
+  if (!matchPeersModal || !matchPeersModalTitle || !matchPeersModalBody) return;
+  matchPeersModalTitle.textContent = `All League Predictions - Match #${match.match_number}`;
+  matchPeersModalBody.innerHTML = '';
+
+  if (!predictions.length) {
+    const empty = document.createElement('p');
+    empty.className = 'match-peer-empty';
+    empty.textContent = 'No league predictions available yet.';
+    matchPeersModalBody.appendChild(empty);
+  } else {
+    for (const item of predictions) {
+      const row = document.createElement('div');
+      row.className = 'match-peer-row';
+      const predictionText = item.hasPrediction
+        ? `${item.teamAScore}:${item.teamBScore}${item.penaltyWinnerSide ? ` (P:${item.penaltyWinnerSide})` : ''}${item.goldenBootBoost ? ' +GB' : ''}`
+        : 'No prediction yet';
+      row.innerHTML = `
+        <span class="match-peer-user">${item.username}</span>
+        <span class="match-peer-pick">${predictionText}</span>
+      `;
+      matchPeersModalBody.appendChild(row);
+    }
+  }
+
+  matchPeersModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMatchPeersModal() {
+  if (!matchPeersModal) return;
+  matchPeersModal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
 function openScoringRulesModal() {
   if (!scoringRulesModal) return;
   scoringRulesModal.classList.remove('hidden');
@@ -470,13 +510,26 @@ async function api(path, options = {}) {
 }
 
 function buildDetailPanel(match) {
-  const formSlots = () => `
-    <div class="form-slots">
-      <span class="form-slot">-</span>
-      <span class="form-slot">-</span>
-      <span class="form-slot">-</span>
+  const formSlots = (teamA, teamB) => `
+    <div class="compact-form-stack">
+      <div class="compact-form-line">
+        <span class="compact-form-team">${flagImg(teamA)} ${teamA}</span>
+        <div class="form-slots compact-form-slots">
+          <span class="form-slot">-</span>
+          <span class="form-slot">-</span>
+          <span class="form-slot">-</span>
+        </div>
+      </div>
+      <div class="compact-form-line">
+        <span class="compact-form-team">${flagImg(teamB)} ${teamB}</span>
+        <div class="form-slots compact-form-slots">
+          <span class="form-slot">-</span>
+          <span class="form-slot">-</span>
+          <span class="form-slot">-</span>
+        </div>
+      </div>
     </div>
-    <p class="form-caption">Form data not yet available</p>
+    <p class="form-caption compact-form-caption">Form data not yet available</p>
   `;
 
   return `
@@ -486,16 +539,79 @@ function buildDetailPanel(match) {
         <p>${match.venue}</p>
         <p style="color:#475569;font-size:12px">${match.city}, ${match.country}</p>
       </div>
-      <div class="detail-section">
-        <h4>${flagImg(match.team_a)} ${match.team_a} - Last 3</h4>
-        ${formSlots()}
+      <div class="detail-section detail-section-form">
+        <h4>Last 3 Results</h4>
+        ${formSlots(match.team_a, match.team_b)}
       </div>
-      <div class="detail-section">
-        <h4>${match.team_b} ${flagImg(match.team_b)} - Last 3</h4>
-        ${formSlots()}
+      <div class="detail-section detail-section-league-picks" data-match-peer-preview data-match-number="${match.match_number}">
+        <h4>League Predictions</h4>
+        <div class="match-peer-list" data-match-peer-list>
+          <p class="match-peer-empty">Loading league predictions...</p>
+        </div>
+        <button class="btn btn-secondary match-peer-more-btn hidden" type="button" data-match-peer-more>View more</button>
       </div>
     </div>
   `;
+}
+
+function renderMatchPeerPreview(container, predictions, match) {
+  const listEl = container.querySelector('[data-match-peer-list]');
+  const moreBtn = container.querySelector('[data-match-peer-more]');
+  if (!listEl || !moreBtn) return;
+
+  listEl.innerHTML = '';
+  if (!predictions.length) {
+    const empty = document.createElement('p');
+    empty.className = 'match-peer-empty';
+    empty.textContent = 'No league predictions yet.';
+    listEl.appendChild(empty);
+    moreBtn.classList.add('hidden');
+    return;
+  }
+
+  const previewItems = predictions.slice(0, 4);
+  for (const item of previewItems) {
+    const row = document.createElement('div');
+    row.className = 'match-peer-row';
+    const predictionText = item.hasPrediction
+      ? `${item.teamAScore}:${item.teamBScore}${item.penaltyWinnerSide ? ` (P:${item.penaltyWinnerSide})` : ''}${item.goldenBootBoost ? ' +GB' : ''}`
+      : 'No prediction yet';
+    row.innerHTML = `
+      <span class="match-peer-user">${item.username}</span>
+      <span class="match-peer-pick">${predictionText}</span>
+    `;
+    listEl.appendChild(row);
+  }
+
+  if (predictions.length > 4) {
+    moreBtn.classList.remove('hidden');
+    moreBtn.onclick = () => openMatchPeersModal(match, predictions);
+  } else {
+    moreBtn.classList.add('hidden');
+  }
+}
+
+async function loadAndRenderMatchPeerPreview(container, match) {
+  const cached = matchPeerPredictionsCache.get(match.match_number);
+  if (cached) {
+    renderMatchPeerPreview(container, cached, match);
+    return;
+  }
+
+  const listEl = container.querySelector('[data-match-peer-list]');
+  try {
+    const payload = await api(`/api/member/matches/${match.match_number}/peer-predictions`);
+    const predictions = payload.predictions || [];
+    matchPeerPredictionsCache.set(match.match_number, predictions);
+    renderMatchPeerPreview(container, predictions, match);
+  } catch (error) {
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    const err = document.createElement('p');
+    err.className = 'match-peer-empty status-error';
+    err.textContent = error.message;
+    listEl.appendChild(err);
+  }
 }
 
 function wireSteppers(container, input) {
@@ -587,6 +703,7 @@ function updateKnockoutControls({ match, scoreAInput, scoreBInput, controls, pen
 }
 
 async function renderPredictionsTable() {
+  matchPeerPredictionsCache = new Map();
   const [matchesResult, scoresResult, cachedScoresResult, statusResult] = await Promise.all([
     api('/api/matches'),
     api('/api/member/scores'),
@@ -811,6 +928,12 @@ async function renderPredictionsTable() {
       const expanded = expandBtn.classList.contains('expanded');
       if (!detailRendered) {
         detailRow.querySelector('.match-detail-cell').innerHTML = buildDetailPanel(match);
+        const peerPreviewContainer = detailRow.querySelector('[data-match-peer-preview]');
+        if (peerPreviewContainer) {
+          loadAndRenderMatchPeerPreview(peerPreviewContainer, match).catch(() => {
+            // Row-level errors are rendered in the preview container.
+          });
+        }
         detailRendered = true;
       }
       expandBtn.classList.toggle('expanded', !expanded);
@@ -1833,9 +1956,18 @@ async function start() {
   cityModal.addEventListener('click', (e) => {
     if (e.target === cityModal) closeCityModal();
   });
+  if (matchPeersModalClose) {
+    matchPeersModalClose.addEventListener('click', closeMatchPeersModal);
+  }
+  if (matchPeersModal) {
+    matchPeersModal.addEventListener('click', (e) => {
+      if (e.target === matchPeersModal) closeMatchPeersModal();
+    });
+  }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeCityModal();
     if (e.key === 'Escape') closeScoringRulesModal();
+    if (e.key === 'Escape') closeMatchPeersModal();
   });
   if (adminLeagueCreateForm) {
     adminLeagueCreateForm.addEventListener('submit', handleAdminLeagueCreate);

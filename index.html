@@ -36,6 +36,20 @@
         <section class="section-block" aria-labelledby="fixtures-title">
           <div class="section-head">
             <h2 id="fixtures-title">Next 5 Fixtures</h2>
+            <label class="landing-timezone-control" for="landing-timezone-select">Display times in:
+              <select id="landing-timezone-select">
+                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="America/Chicago">Central Time (CT)</option>
+                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                <option value="Europe/London">London (GMT/BST)</option>
+                <option value="Europe/Berlin">Germany (CET/CEST)</option>
+                <option value="Europe/Rome">Italy (CET/CEST)</option>
+                <option value="Asia/Kolkata">India (IST)</option>
+                <option value="Asia/Singapore">Singapore (SGT)</option>
+                <option value="Australia/Sydney">Australia (AEST/AEDT)</option>
+                <option value="Asia/Tokyo">Japan (JST)</option>
+              </select>
+            </label>
           </div>
           <div id="public-fixtures-list" class="public-fixtures-list"></div>
         </section>
@@ -436,6 +450,19 @@
 
             <p>Good luck, set your alarms, and don't forget to submit your picks!</p>
           </div>
+        </div>
+      </div>
+
+      <div id="match-peers-modal" class="city-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="match-peers-modal-title">
+        <div class="city-modal">
+          <div class="city-modal-header">
+            <div>
+              <p class="kicker">League Picks</p>
+              <h3 id="match-peers-modal-title">All League Predictions</h3>
+            </div>
+            <button id="match-peers-modal-close" class="city-modal-close" type="button" aria-label="Close league predictions">✕</button>
+          </div>
+          <div id="match-peers-modal-body" class="city-modal-body"></div>
         </div>
       </div>
 
