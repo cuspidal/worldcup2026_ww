@@ -461,10 +461,24 @@ function renderPublicFixtures() {
   if (!publicFixturesList) return;
   publicFixturesList.innerHTML = '';
 
+  const now = Date.now();
+
   const fixtures = scheduleCache
-    .filter((m) => m.stage === 'Group Stage')
-    .sort((a, b) => a.match_number - b.match_number)
+    .filter((m) => m.stage === 'Group Stage' && kickoffTimeMs(m) >= now)
+    .sort((a, b) => {
+      const kickoffDiff = kickoffTimeMs(a) - kickoffTimeMs(b);
+      if (kickoffDiff !== 0) return kickoffDiff;
+      return a.match_number - b.match_number;
+    })
     .slice(0, 5);
+
+  if (!fixtures.length) {
+    const emptyState = document.createElement('p');
+    emptyState.className = 'fixture-empty-state';
+    emptyState.textContent = 'No upcoming group-stage fixtures.';
+    publicFixturesList.appendChild(emptyState);
+    return;
+  }
 
   for (const match of fixtures) {
     const row = document.createElement('article');
