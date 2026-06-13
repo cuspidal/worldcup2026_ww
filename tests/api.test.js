@@ -529,6 +529,92 @@ test('admin can create, update, read and delete actual results', async (t) => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
+test('admin can unlock all locked scores for all users', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wc26-'));
+  const dbFile = path.join(tmpDir, 'predictions.db');
+
+  const { app, db } = await buildApp({ dbFile });
+  const adminAgent = request.agent(app);
+  const memberAgent = request.agent(app);
+
+  const adminLogin = await adminAgent.post('/api/login').send({ username: 'admin', password: 'password' });
+  assert.equal(adminLogin.status, 200);
+
+  const memberLogin = await memberAgent.post('/api/login').send({ username: 'member1', password: 'password' });
+  assert.equal(memberLogin.status, 200);
+
+  const matchStatus = await memberAgent.get('/api/matches/status');
+  assert.equal(matchStatus.status, 200);
+  const editableMatch = matchStatus.body.status.find((item) => !item.hasStarted);
+  assert.equal(Boolean(editableMatch), true);
+  const matchNumber = editableMatch.matchNumber;
+
+  const prediction = await memberAgent.post('/api/predictions').send({
+    matchNumber,
+    teamAScore: 2,
+    teamBScore: 1
+  });
+  assert.equal(prediction.status, 201);
+
+  const lockResult = await adminAgent.post('/api/admin/results').send({
+    matchNumber,
+    teamAScore: 1,
+    teamBScore: 0
+  });
+  assert.equal(lockResult.status, 201);
+
+  const blockedUpdate = await memberAgent.put(`/api/predictions/${matchNumber}`).send({
+    teamAScore: 3,
+    teamBScore: 0
+  });
+  assert.equal(blockedUpdate.status, 409);
+  assert.equal(blockedUpdate.body.reason, 'score_locked');
+
+  const calculated = await adminAgent.post('/api/admin/calculate-scores').send({});
+  assert.equal(calculated.status, 200);
+
+  const unlockAll = await adminAgent.post('/api/admin/results/unlock-all').send({});
+  assert.equal(unlockAll.status, 200);
+  assert.equal(unlockAll.body.unlockedMatches, 1);
+  assert.equal(unlockAll.body.unlockAllPredictions, true);
+  assert.equal(unlockAll.body.actualResultsPreserved, true);
+
+  const statusAfterUnlock = await memberAgent.get('/api/matches/status');
+  assert.equal(statusAfterUnlock.status, 200);
+  assert.equal(statusAfterUnlock.body.unlockAllPredictions, true);
+
+  const resultsAfterUnlock = await adminAgent.get('/api/admin/results');
+  assert.equal(resultsAfterUnlock.status, 200);
+  assert.equal(resultsAfterUnlock.body.results.length, 1);
+  assert.equal(resultsAfterUnlock.body.results[0].matchNumber, matchNumber);
+
+  const cachedAfterUnlock = await memberAgent.get('/api/member/scores/cached');
+  assert.equal(cachedAfterUnlock.status, 200);
+  const unlockedMatch = cachedAfterUnlock.body.items.find((item) => item.matchNumber === matchNumber);
+  assert.equal(unlockedMatch.officialStatus, 'official');
+
+  const updatedAfterUnlock = await memberAgent.put(`/api/predictions/${matchNumber}`).send({
+    teamAScore: 3,
+    teamBScore: 0
+  });
+  assert.equal(updatedAfterUnlock.status, 200);
+
+  const relock = await adminAgent.put('/api/admin/predictions-lock').send({ enabled: false });
+  assert.equal(relock.status, 200);
+  assert.equal(relock.body.unlockAllPredictions, false);
+  assert.equal(relock.body.actualResultsPreserved, true);
+
+  const blockedAfterRelock = await memberAgent.put(`/api/predictions/${matchNumber}`).send({
+    teamAScore: 4,
+    teamBScore: 0
+  });
+  assert.equal(blockedAfterRelock.status, 409);
+  assert.equal(blockedAfterRelock.body.reason, 'score_locked');
+
+  await db.close();
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
+
 test('member scoring API applies mixed scoring rules correctly', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wc26-'));
   const dbFile = path.join(tmpDir, 'predictions.db');

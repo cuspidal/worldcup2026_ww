@@ -5,12 +5,15 @@
   "description": "Local World Cup 2026 prediction challenge app",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "backup:bucket": "node scripts/backup-db-to-bucket.js",
+    "backup:bucket:run": "npm run backup:bucket"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1066.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-session": "^1.19.0",

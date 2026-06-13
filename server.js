@@ -91,6 +91,12 @@ function parseBooleanFlag(value) {
   return value === true || value === 1 || value === '1' || value === 'true';
 }
 
+function parseAdminToggleEnabled(value) {
+  if (value === true || value === 1 || value === '1' || value === 'true') return true;
+  if (value === false || value === 0 || value === '0' || value === 'false') return false;
+  return null;
+}
+
 function requireAuth(req, res, next) {
   if (!req.session.userId) {
     res.status(401).json({ error: 'Authentication required' });
@@ -292,6 +298,26 @@ async function buildApp(options = {}) {
        ORDER BY u.username ASC`,
       [leagueId]
     );
+  }
+
+  async function getAppSetting(key, fallbackValue = null) {
+    const row = await db.get('SELECT value FROM app_settings WHERE key = ?', [key]);
+    return row?.value ?? fallbackValue;
+  }
+
+  async function setAppSetting(key, value) {
+    await db.run(
+      `INSERT INTO app_settings (key, value, updated_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(key) DO UPDATE SET
+         value = excluded.value,
+         updated_at = CURRENT_TIMESTAMP`,
+      [key, String(value)]
+    );
+  }
+
+  async function isUnlockAllPredictionsEnabled() {
+    return (await getAppSetting('unlock_all_predictions', '0')) === '1';
   }
 
   function scoreStatsForMember(predictionRows, actualMap, memberId) {
@@ -614,6 +640,7 @@ async function buildApp(options = {}) {
   app.get('/api/matches/status', requireAuth, async (req, res) => {
     const actualResults = await db.all('SELECT match_number FROM actual_results');
     const actualMap = new Set(actualResults.map((r) => r.match_number));
+    const unlockAllPredictions = await isUnlockAllPredictionsEnabled();
 
     const status = allMatches.map((match) => ({
       matchNumber: match.match_number,
@@ -624,13 +651,14 @@ async function buildApp(options = {}) {
       isKnockout: isKnockoutMatch(match)
     }));
 
-    res.json({ status });
+    res.json({ status, unlockAllPredictions });
   });
 
   app.get('/api/matches/group-stage/status', requireAuth, async (req, res) => {
     // Returns match status including lock and started info
     const actualResults = await db.all('SELECT match_number FROM actual_results');
     const actualMap = new Set(actualResults.map((r) => r.match_number));
+    const unlockAllPredictions = await isUnlockAllPredictionsEnabled();
 
     const status = groupStageMatches.map((match) => ({
       matchNumber: match.match_number,
@@ -639,7 +667,7 @@ async function buildApp(options = {}) {
       startTime: parseMatchStartTime(match)
     }));
 
-    res.json({ status });
+    res.json({ status, unlockAllPredictions });
   });
 
   app.get('/api/predictions', requireAuth, requireLeagueContextIfMember, async (req, res) => {
@@ -707,6 +735,7 @@ async function buildApp(options = {}) {
     }
 
     const match = matchMap.get(parsedMatch);
+    const unlockAllPredictions = await isUnlockAllPredictionsEnabled();
     const parsedPayload = await validatePredictionPayload({
       userId: req.session.userId,
       match,
@@ -721,7 +750,7 @@ async function buildApp(options = {}) {
     }
 
     // Phase 6: Check if match has started
-    if (match && isMatchStarted(match)) {
+    if (!unlockAllPredictions && match && isMatchStarted(match)) {
       res.status(409).json({ error: 'Match has started', reason: 'match_started' });
       return;
     }
@@ -731,7 +760,7 @@ async function buildApp(options = {}) {
       'SELECT match_number FROM actual_results WHERE match_number = ?',
       [parsedMatch]
     );
-    if (actualResult) {
+    if (!unlockAllPredictions && actualResult) {
       res.status(409).json({ error: 'Final score already set', reason: 'score_locked' });
       return;
     }
@@ -769,6 +798,7 @@ async function buildApp(options = {}) {
     }
 
     const match = matchMap.get(parsedMatch);
+    const unlockAllPredictions = await isUnlockAllPredictionsEnabled();
     const parsedPayload = await validatePredictionPayload({
       userId: req.session.userId,
       match,
@@ -784,7 +814,7 @@ async function buildApp(options = {}) {
     }
 
     // Phase 6: Check if match has started
-    if (match && isMatchStarted(match)) {
+    if (!unlockAllPredictions && match && isMatchStarted(match)) {
       res.status(409).json({ error: 'Match has started', reason: 'match_started' });
       return;
     }
@@ -794,7 +824,7 @@ async function buildApp(options = {}) {
       'SELECT match_number FROM actual_results WHERE match_number = ?',
       [parsedMatch]
     );
-    if (actualResult) {
+    if (!unlockAllPredictions && actualResult) {
       res.status(409).json({ error: 'Final score already set', reason: 'score_locked' });
       return;
     }
@@ -1861,6 +1891,36 @@ async function buildApp(options = {}) {
     }
 
     res.status(204).end();
+  });
+
+  app.post('/api/admin/results/unlock-all', requireAuth, requireAdmin, async (req, res) => {
+    const lockedCountRow = await db.get('SELECT COUNT(*) AS count FROM actual_results');
+    const unlockedMatches = Number(lockedCountRow?.count || 0);
+
+    await setAppSetting('unlock_all_predictions', '1');
+
+    res.json({
+      unlockedMatches,
+      unlockAllPredictions: true,
+      actualResultsPreserved: true
+    });
+  });
+
+  app.put('/api/admin/predictions-lock', requireAuth, requireAdmin, async (req, res) => {
+    const enabled = parseAdminToggleEnabled(req.body?.enabled);
+    if (enabled === null) {
+      res.status(400).json({ error: 'Invalid unlock toggle payload' });
+      return;
+    }
+
+    await setAppSetting('unlock_all_predictions', enabled ? '1' : '0');
+    const lockedCountRow = await db.get('SELECT COUNT(*) AS count FROM actual_results');
+
+    res.json({
+      unlockAllPredictions: enabled,
+      lockedMatches: Number(lockedCountRow?.count || 0),
+      actualResultsPreserved: true
+    });
   });
 
   app.post('/api/admin/calculate-scores', requireAuth, requireAdmin, async (req, res) => {

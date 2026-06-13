@@ -165,6 +165,22 @@ async function initDatabase(dbFile) {
     )`
   );
 
+  await run(
+    db,
+    `CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+
+  await run(
+    db,
+    `INSERT INTO app_settings (key, value)
+     VALUES ('unlock_all_predictions', '0')
+     ON CONFLICT(key) DO NOTHING`
+  );
+
   // Phase 18: OTP has been removed. Clean up legacy OTP tables when present.
   await run(db, 'DROP TABLE IF EXISTS otp_challenges');
   await run(db, 'DROP TABLE IF EXISTS auth_rate_limits');

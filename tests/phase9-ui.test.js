@@ -9,10 +9,10 @@ function read(fileName) {
   return fs.readFileSync(path.join(root, fileName), 'utf8');
 }
 
-test('Phase 9 landing contains hero, countdown, host cities, and fixtures hooks', () => {
+test('Phase 9 landing contains hero, host cities, and fixtures hooks', () => {
   const html = read('index.html');
   assert.match(html, /id="landing-hero"/);
-  assert.match(html, /id="landing-countdown"/);
+  assert.doesNotMatch(html, /id="landing-countdown"/);
   assert.match(html, /id="host-cities-grid"/);
   assert.match(html, /id="public-fixtures-list"/);
   assert.match(html, />Login</);
@@ -35,6 +35,7 @@ test('Phase 9 admin contains sidebar, KPI cards, and admin datetime', () => {
   const html = read('index.html');
   assert.match(html, /class="admin-sidebar"/);
   assert.match(html, /id="admin-datetime"/);
+  assert.match(html, /id="admin-unlock-all-scores-btn"/);
   assert.match(html, /id="kpi-members"/);
   assert.match(html, /id="kpi-matches"/);
   assert.match(html, /id="kpi-status"/);
