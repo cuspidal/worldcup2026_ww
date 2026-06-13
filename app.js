@@ -14,7 +14,6 @@ const signupPasswordInput = document.getElementById('signup-password');
 const signupConfirmPasswordInput = document.getElementById('signup-confirm-password');
 const signupStatus = document.getElementById('signup-status');
 
-const landingCountdown = document.getElementById('landing-countdown');
 const landingTimezoneSelect = document.getElementById('landing-timezone-select');
 const hostCitiesGrid = document.getElementById('host-cities-grid');
 const publicFixturesList = document.getElementById('public-fixtures-list');
@@ -58,6 +57,8 @@ const adminLeaguesUsersScreen = document.getElementById('admin-leagues-users-scr
 const adminNavMatches = document.getElementById('admin-nav-matches');
 const adminNavLeaguesUsers = document.getElementById('admin-nav-leagues-users');
 const adminDateTime = document.getElementById('admin-datetime');
+const adminUnlockAllScoresButton = document.getElementById('admin-unlock-all-scores-btn');
+const adminMatchStatus = document.getElementById('admin-match-status');
 const kpiMembers = document.getElementById('kpi-members');
 const kpiMatches = document.getElementById('kpi-matches');
 const kpiStatus = document.getElementById('kpi-status');
@@ -87,7 +88,6 @@ const matchPeersModalClose = document.getElementById('match-peers-modal-close');
 let sessionUser = null;
 let currentTimezone = 'America/New_York';
 let scheduleCache = [];
-let countdownTimer = null;
 let adminClockTimer = null;
 let adminActiveScreen = 'matches';
 let memberActiveScreen = 'predictions';
@@ -95,6 +95,7 @@ let adminLeagueData = { leagues: [], members: [], users: [] };
 let memberPeersData = [];
 let memberPeerShowAll = false;
 let matchPeerPredictionsCache = new Map();
+let adminUnlockAllPredictionsEnabled = false;
 
 const PEER_PREDICTION_LATEST_LIMIT = 10;
 const CHART_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#0ea5e9'];
@@ -307,36 +308,6 @@ function stopTimers() {
     clearInterval(adminClockTimer);
     adminClockTimer = null;
   }
-}
-
-function startCountdownTimer() {
-  if (countdownTimer) return;
-  countdownTimer = setInterval(() => {
-    renderCountdown();
-  }, 60000);
-}
-
-function renderCountdown() {
-  if (!landingCountdown || !scheduleCache.length) return;
-
-  const firstMatch = [...scheduleCache]
-    .sort((a, b) => a.match_number - b.match_number)
-    .find((match) => match.stage === 'Group Stage');
-
-  if (!firstMatch) {
-    landingCountdown.textContent = 'Countdown unavailable';
-    return;
-  }
-
-  const target = parseEtToUtc(firstMatch.date, firstMatch.time_et).getTime();
-  const now = Date.now();
-  const delta = Math.max(0, target - now);
-
-  const days = Math.floor(delta / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((delta / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((delta / (1000 * 60)) % 60);
-
-  landingCountdown.textContent = `Kickoff Countdown: ${days}d ${hours}h ${minutes}m`;
 }
 
 function openCityModal(city, venue) {
@@ -824,6 +795,7 @@ async function renderPredictionsTable() {
   const scoreMap = new Map(scoresResult.items.map((item) => [item.matchNumber, item]));
   const cachedScoreMap = new Map(cachedItems.map((item) => [item.matchNumber, item]));
   const statusMap = new Map(statusResult.status.map((item) => [item.matchNumber, item]));
+  const unlockAllPredictions = Boolean(statusResult.unlockAllPredictions);
   const lastThreeFormByMatch = buildLastThreeFormByMatch(matchesResult.matches || [], scoreMap);
 
   matchesBody.innerHTML = '';
@@ -882,7 +854,7 @@ async function renderPredictionsTable() {
     const existingPrediction = scoreItem?.prediction || null;
     const actualResult = scoreItem?.actual || null;
     const statusInfo = statusMap.get(matchWithForm.match_number);
-    const isLocked = statusInfo?.isLocked || statusInfo?.hasStarted;
+    const isLocked = !unlockAllPredictions && (statusInfo?.isLocked || statusInfo?.hasStarted);
 
     if (existingPrediction) {
       scoreAInput.value = existingPrediction.teamAScore;
@@ -1334,10 +1306,14 @@ function updateAdminResultModifiers({ match, scoreAInput, scoreBInput, modifiers
 }
 
 async function renderAdminTable() {
-  const [matchesResult, resultsResult] = await Promise.all([
+  const [matchesResult, resultsResult, statusResult] = await Promise.all([
     api('/api/matches'),
-    api('/api/admin/results')
+    api('/api/admin/results'),
+    api('/api/matches/status')
   ]);
+
+  adminUnlockAllPredictionsEnabled = Boolean(statusResult.unlockAllPredictions);
+  renderAdminUnlockToggleButton();
 
   const resultMap = new Map(
     resultsResult.results.map((result) => [
@@ -1499,6 +1475,22 @@ function setAdminLeagueStatus(message, isError = false) {
   adminLeagueStatus.textContent = message;
   adminLeagueStatus.classList.toggle('status-error', isError);
   adminLeagueStatus.classList.toggle('status-ok', !isError && Boolean(message));
+}
+
+function setAdminMatchStatus(message, isError = false) {
+  if (!adminMatchStatus) return;
+  adminMatchStatus.textContent = message;
+  adminMatchStatus.classList.toggle('status-error', isError);
+  adminMatchStatus.classList.toggle('status-ok', !isError && Boolean(message));
+}
+
+function renderAdminUnlockToggleButton() {
+  if (!adminUnlockAllScoresButton) return;
+  const icon = adminUnlockAllPredictionsEnabled ? '🔓' : '🔒';
+  const label = adminUnlockAllPredictionsEnabled ? 'Unlocked (click to lock)' : 'Locked (click to unlock)';
+  adminUnlockAllScoresButton.textContent = `${icon} ${label}`;
+  adminUnlockAllScoresButton.classList.toggle('admin-toggle-unlocked', adminUnlockAllPredictionsEnabled);
+  adminUnlockAllScoresButton.classList.toggle('admin-toggle-locked', !adminUnlockAllPredictionsEnabled);
 }
 
 function buildSelectOptions(selectEl, options, valueKey, labelBuilder) {
@@ -1765,6 +1757,35 @@ async function handleAdminMemberAssign(event) {
   }
 }
 
+async function handleAdminUnlockAllScores() {
+  const enabling = !adminUnlockAllPredictionsEnabled;
+  const confirmed = window.confirm(
+    enabling
+      ? 'Enable unlock-all for members? This keeps actual results unchanged and allows members to edit completed/locked matches.'
+      : 'Switch back to locked mode? Members will no longer be able to edit completed/locked matches.'
+  );
+  if (!confirmed) return;
+
+  setAdminMatchStatus('');
+
+  try {
+    const result = await api('/api/admin/predictions-lock', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: enabling })
+    });
+    adminUnlockAllPredictionsEnabled = Boolean(result.unlockAllPredictions);
+    renderAdminUnlockToggleButton();
+    setAdminMatchStatus(
+      adminUnlockAllPredictionsEnabled
+        ? `Unlocked mode enabled. Members can edit completed matches (${result.lockedMatches || 0} currently locked).`
+        : `Locked mode enabled. Completed matches are protected again (${result.lockedMatches || 0} currently locked).`
+    );
+    await renderAdminTable();
+  } catch (error) {
+    setAdminMatchStatus(error.message, true);
+  }
+}
+
 function startAdminClock() {
   if (adminClockTimer) clearInterval(adminClockTimer);
 
@@ -1789,8 +1810,6 @@ async function renderLanding() {
   landingView.classList.remove('hidden');
   renderHostCities();
   renderPublicFixtures();
-  renderCountdown();
-  startCountdownTimer();
 }
 
 async function renderLogin() {
@@ -2085,6 +2104,11 @@ async function start() {
       event.preventDefault();
       setAdminScreen('leagues-users');
       renderLeagueAdminPanel().catch((error) => setAdminLeagueStatus(error.message, true));
+    });
+  }
+  if (adminUnlockAllScoresButton) {
+    adminUnlockAllScoresButton.addEventListener('click', () => {
+      handleAdminUnlockAllScores().catch((error) => setAdminMatchStatus(error.message, true));
     });
   }
   if (memberPeerSelect) {

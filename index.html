@@ -29,7 +29,6 @@
               <a class="btn btn-primary" href="#/member/login">Login</a>
               <a class="btn btn-secondary" href="#/member/signup">Register</a>
             </div>
-            <div id="landing-countdown" class="countdown" aria-live="polite"></div>
           </div>
         </header>
 
@@ -374,6 +373,10 @@
             </section>
 
             <section id="admin-matches-screen" class="admin-screen" aria-label="Manage matches">
+            <div class="admin-matches-actions">
+              <button id="admin-unlock-all-scores-btn" type="button" class="btn btn-secondary admin-toggle-locked">🔒 Locked (click to unlock)</button>
+              <p id="admin-match-status" class="confirm-status" aria-live="polite"></p>
+            </div>
             <div class="table-wrap admin-grid-wrap">
               <table>
                 <thead>

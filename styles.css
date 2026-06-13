@@ -891,6 +891,28 @@ h3 {
   padding: var(--space-5) var(--space-6) var(--space-6) var(--space-6);
 }
 
+.admin-matches-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6) 0 var(--space-6);
+  flex-wrap: wrap;
+}
+
+.admin-matches-actions .confirm-status {
+  margin-left: 0;
+}
+
+#admin-unlock-all-scores-btn.admin-toggle-unlocked {
+  background: #0f7b47;
+  border-color: #0f7b47;
+}
+
+#admin-unlock-all-scores-btn.admin-toggle-locked {
+  background: #334155;
+  border-color: #334155;
+}
+
 table {
   width: 100%;
   min-width: 980px;
